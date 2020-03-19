@@ -1,14 +1,17 @@
 #include "Lexical_Analyzer.cpp"
 #include <string>
 #include <iostream>
+#include <sstream>
+
+using namespace std;
 
 void collor(char *input);
 void spaceless(std::string pch);
 void stmts(void);
 void stmt(void);
 void rest0(void);
-void loc(void);
-void resta(void);
+string loc(void);
+string resta(string resta_inArray);
 void elist(void);
 void rest1(void);
 void bool_x(void);
@@ -16,26 +19,45 @@ void equality(void);
 void rel(void);
 void rest4(void);
 void rop_expr(void);
-void expr(void);
-void rest5(void);
-void term(void);
-void unary(void);
-void rest6(void);
-void factor(void);
+string expr(void);
+string rest5(string rest5_in);
+string term(void);
+string unary(void);
+string rest6(string rest6_in);
+string factor(void);
+void emit(string out);
+string newtemp();
 int spe[MAX_LINE];
+std::string att[MAX_LINE];
 int x, count, cnt = 0;
 std::string output;
+string out;
+string temp = "1";
 std::string res[MAX_LINE];
+
+void emit(string out){
+    cout<<out<<endl;
+}
+
+string newtemp(){
+    string s ="T"+temp;
+    int t=atoi(temp.c_str())+1;
+    stringstream sx;
+    sx<<t;
+    temp=sx.str();
+    return s;
+}
 
 void collor(char *input){
     int length = strlen(input);
     opt output;
     cnt = 0;
     count = 0;
-    printf("Production Process:\n");
     for(i = 0; i < length; i++){
         output = analyze(input);
-        spe[cnt++] = output.spe;
+        spe[cnt] = output.spe;
+        att[cnt] = output.att;
+        cnt++;
         //printf("<%d, %s>\n", output.spe, output.att);
     }
     for(x = 0; x < cnt; x++){
@@ -69,7 +91,6 @@ void spaceless(std::string pch){
 }
 
 void stmts(void){
-    printf("stmts->stmt rest0\n");
     output = "stmt rest0";
     res[count++] = output;
     stmt();
@@ -79,12 +100,10 @@ void stmts(void){
 void rest0(void){
     
     if(x >= cnt){
-        printf("rest0->ℇ\n");
         output = output.replace(output.find("rest0"), 5, "");
         res[count++] = output;
     }
     else{
-        printf("rest0->stmt rest0\n");
         output = output.replace(output.find("rest0"), 5, "stmt rest0");
         res[count++] = output;
         x++;
@@ -94,27 +113,28 @@ void rest0(void){
 }
 
 void stmt(){
+    string loc_place, expr_place;
     if(spe[x] == 111){
-        printf("stmt->loc = expr;\n");
         output = output.replace(output.find("stmt"), 4, "loc = expr;");
         res[count++] = output;
-        loc();
+        loc_place = loc();
         if(spe[x++] != 46){
             printf("Error! loc after need '='\n");
         }
         else{
-            expr();
+            expr_place = expr();
             if(spe[x] != 84){
                 printf("Error! Need ';'\n");
             }
             else{
+                out = loc_place+"="+expr_place;
+                emit(out);
                 x++;
             }
         }
 
     }
     else if(spe[x] == 17){
-        printf("stmt->if(bool)stmt else stmt\n");
         output = output.replace(output.find("stmt"), 4, "if(bool)stmt else stmt");
         res[count++] = output;
         if(spe[++x] != 81){
@@ -139,7 +159,6 @@ void stmt(){
         }
     }
     else if(spe[x] == 20){
-        printf("stmt->while(bool)stmt\n");
         output = output.replace(output.find("stmt"), 4, "while(bool)stmt");
         res[count++] = output;
         if(spe[++x] != 81){
@@ -162,17 +181,20 @@ void stmt(){
     }
 }
 
-void loc(void){
-    printf("loc->ID resta\n");
+string loc(void){
+    string resta_inArray, id_place, loc_place, resta_place;
     output = output.replace(output.find("loc"), 3, "ID resta");
     res[count++] = output;
+    id_place = att[x];
+    resta_inArray = id_place;
     x++;
-    resta();
+    resta_place = resta(resta_inArray);
+    loc_place = resta_place;
+    return loc_place;
 }
-
-void resta(){
+string resta(string resta_inArray){
+    string resta_place;
     if(spe[x] == 88){
-        printf("resta->[elist]\n");
         output = output.replace(output.find("resta"), 5, "[elist]");
         res[count++] = output;
         if(spe[x] != 88){
@@ -190,14 +212,14 @@ void resta(){
         }
     }
     else{
-        printf("resta->ℇ\n");
         output = output.replace(output.find("resta"), 5, "");
         res[count++] = output;
+        resta_place = resta_inArray;
     }
+    return resta_place;
 }
 
 void elist(void){
-    printf("elist->expr rest1\n");
     output = output.replace(output.find("elist"), 5, "expr rest1");
     res[count++] = output;
     expr();
@@ -206,7 +228,6 @@ void elist(void){
 
 void rest1(void){
     if(spe[x] == 90){
-        printf("rest1->,expr rest1\n");
         output = output.replace(output.find("rest1"), 5, ", expr rest1");
         res[count++] = output;
         x++;
@@ -214,7 +235,6 @@ void rest1(void){
         rest1();
     }
     else{
-        printf("rest1->ℇ\n");
         output = output.replace(output.find("rest1"), 5, "");
         res[count++] = output;
     }
@@ -222,14 +242,12 @@ void rest1(void){
 
 
 void bool_x(void){
-    printf("bool->equality\n");
     output = output.replace(output.find("bool"), 4, "equality");
     res[count++] = output;
     equality();
 }
 
 void equality(void){
-    printf("equality->rel rest4\n");
     output = output.replace(output.find("equality"), 8, "rel rest4");
     res[count++] = output;
     rel();
@@ -237,7 +255,6 @@ void equality(void){
 }
 
 void rel(void){
-    printf("rel->expr rop_expr\n");
     output = output.replace(output.find("rel"), 3, "expr rop_expr");
     res[count++] = output;
     expr();
@@ -246,35 +263,30 @@ void rel(void){
 
 void rop_expr(void){
     if(spe[x] == 49){
-        printf("rop_expr-><expr\n");
         output = output.replace(output.find("rop_expr"), 8, "< expr");
         res[count++] = output;
         x++;
         expr();
     }
     else if(spe[x] == 50){
-        printf("rop_expr-><=expr\n");
         output = output.replace(output.find("rop_expr"), 8, "<= expr");
         res[count++] = output;
         x++;
         expr();
     }
     else if(spe[x] == 47){
-        printf("rop_expr->>expr\n");
         output = output.replace(output.find("rop_expr"), 8, "> expr");
         res[count++] = output;
         x++;
         expr();
     }
     else if(spe[x] == 48){
-        printf("rop_expr->>=expr\n");
         output = output.replace(output.find("rop_expr"), 8, ">= expr");
         res[count++] = output;
         x++;
         expr();
     }
     else{
-        printf("rop_expr->ℇ\n");
         output = output.replace(output.find("rop_expr"), 8, "");
         res[count++] = output;
     }   
@@ -283,7 +295,6 @@ void rop_expr(void){
 
 void rest4(void){
     if(spe[x] == 51){
-		printf("rest4->==rel rest4\n");
         output = output.replace(output.find("rest4"), 5, "== rel rest4");
         res[count++] = output;
         x++;
@@ -291,7 +302,6 @@ void rest4(void){
         rest4();
 	}
     else if(spe[x] == 52){
-		printf("rest4->!=rel rest4\n");
         output = output.replace(output.find("rest4"), 5, "!= rel rest4");
         res[count++] = output;
         x++;
@@ -299,102 +309,128 @@ void rest4(void){
         rest4();
 	}
 	else{
-        printf("rest4->ℇ\n");
         output = output.replace(output.find("rest4"), 5, "");
         res[count++] = output;
 	}
 }
 
-void expr(void){
-    printf("expr->term rest5\n");
+string expr(void){
+    string rest5_in, term_place, expr_place, rest5_place;
     output = output.replace(output.find("expr"), 4, "term rest5");
     res[count++] = output;
-    term();
-    rest5();
+    term_place = term();
+    rest5_in = term_place;
+    rest5_place = rest5(rest5_in);
+    expr_place = rest5_place;
+    return expr_place;
 }
 
-void rest5(void){
+string rest5(string rest5_in){
+    string rest51_in, rest51_place, rest5_place, term_place;
     if(spe[x] == 41){
-		printf("rest5->+term rest5\n");
         output = output.replace(output.find("rest5"), 5, "+ term rest5");
         res[count++] = output;
         x++;
-        term();
-        rest5();
+        term_place = term();
+        rest51_in = newtemp();
+        out = rest51_in + "=" + rest5_in + "+" + term_place;
+        emit(out);
+        rest51_place = rest5(rest51_in);
+        rest5_place = rest51_place;
 	}
     else if(spe[x] == 42){
-		printf("rest5->-term rest5\n");
         output = output.replace(output.find("rest5"), 5, "- term rest5");
         res[count++] = output;
         x++;
-        term();
-        rest5();
+        term_place = term();
+        rest51_in = newtemp();
+        out = rest51_in + "=" + rest5_in + "-" + term_place;
+        emit(out);
+        rest51_place = rest5(rest51_in);
+        rest5_place = rest51_place;
 	}
 	else{
-        printf("rest5->ℇ\n");
         output = output.replace(output.find("rest5"), 5, "");
         res[count++] = output;
+        rest5_place = rest5_in;
 	}
+    return rest5_place;
 }
 
-void term(void){
-    printf("term->unary rest6\n");
+string term(void){
+    string unary_place, rest6_in, term_place, rest6_place;
     output = output.replace(output.find("term"), 4, "unary rest6");
     res[count++] = output;
-    unary();
-    rest6();
+    unary_place = unary();
+    rest6_in = unary_place;
+    rest6_place = rest6(rest6_in);
+    term_place = rest6_place;
+    return term_place;
 }
 
-void unary(void){
-    printf("unary->factor\n");
+string unary(void){
+    string unary_place, factor_place;
     output = output.replace(output.find("unary"), 5, "factor");
     res[count++] = output;
-    factor();
+    factor_place = factor();
+    unary_place = factor_place;
+    return unary_place;
 }
 
-void factor(void){
+string factor(void){
+    string factor_place, expr_place, loc_place, num_value;
     if(spe[x] == 100){
-        printf("factor->num\n");
         output = output.replace(output.find("factor"), 6, "num");
         res[count++] = output;
+        num_value = att[x];
         x++;
+        factor_place = num_value;
     }
     else if(spe[x] == 81){
-        printf("factor->(expr)\n");
         output = output.replace(output.find("factor"), 6, "(expr)");
         res[count++] = output;
         x++;
-        expr();
+        expr_place = expr();
+        factor_place = expr_place;
         x++;
     }
     else if(spe[x] == 111){
-        printf("factor->loc\n");
         output = output.replace(output.find("factor"), 6, "loc");
         res[count++] = output;
-        loc();
+        loc_place = loc();
+        factor_place = loc_place;
     }
+    return factor_place;
 }
 
-void rest6(void){
+string rest6(string rest6_in){
+    string rest61_in, rest61_place, rest6_place, unary_place;
 	if(spe[x] == 43){
-		printf("rest6->*unary rest6\n");
         output = output.replace(output.find("rest6"), 5, "* unary rest6");
         res[count++] = output;
         x++;
-        unary();
-        rest6();
+        rest61_in = newtemp();
+        unary_place = unary();
+        out = rest61_in + "=" + rest6_in + "*" + unary_place;
+        emit(out);
+        rest61_place = rest6(rest61_in);
+        rest6_place = rest61_place;
 	}
 	else if(spe[x] == 44){
-		printf("rest6->/unary rest6\n");
         output = output.replace(output.find("rest6"), 5, "/ unary rest6");
         res[count++] = output;
         x++;
-        unary();
-        rest6();
+        rest61_in = newtemp();
+        unary_place = unary();
+        out = rest61_in + "=" + rest6_in + "/" + unary_place;
+        emit(out);
+        rest61_place = rest6(rest61_in);
+        rest6_place = rest61_place;
 	}
     else{
-		printf("rest6->ℇ\n");
         output = output.replace(output.find("rest6"), 5, "");
         res[count++] = output;
+        rest6_place = rest6_in;
 	}
+    return rest6_place;
 }
