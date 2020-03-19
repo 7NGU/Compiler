@@ -44,7 +44,7 @@ stmt ⟶ loc = expr;<br/>
 e.g.<br/>
 *Grammar Analyzer:* expr ⟶ term rest5 
 <br/>
-expr 函数先调用 term 函数再调用 rest5 函数;
+&emsp;&emsp;The expr function first calls the term function and then the rest5 function;
 
 *Arithmetic expression:*{rest5.in = term.val}
 <br/>
